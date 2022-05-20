@@ -1,0 +1,25 @@
+{
+  "name": "cooldude-ts",
+  "version": "1.0.0",
+  "description": "A Discord Bot for the Jumpmaze server",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "run": "tsc && node build/src/main.js $npm_config_command",
+    "test": "npx --no-install jest --rootDir tests --silent false"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@types/minimist": "^1.2.2",
+    "discord.js": "^13.6.0",
+    "minimist": "^1.2.5",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "jest": "^27.5.0",
+    "ts-jest": "^27.1.3"
+  }
+}
