@@ -14,9 +14,11 @@ export class Bot {
          console.log( 'tag: %s', client.user.tag );
          console.log( 'username: %s', client.user.username );
       }
+
       client.on( 'messageCreate', async message => {
          this.onMessageCreate( message );
       } );
+
       client.channels.cache.forEach( async ( channel, name ) => {
          if ( channel.type === 'GUILD_TEXT' && channel.name === 'general' ) {
             console.log( name );
@@ -46,11 +48,13 @@ export class Bot {
    }
 
    private async runCommand( message: Message ) {
+      // Ignore messages from the bot itself.
       if ( message.client.user !== null &&
          message.author.equals( message.client.user ) ) {
          console.log( 'message from self' );
          return;
       }
+
       const lexer = new Lexer( message.content );
       const parser = new Parser( lexer );
       const request = parser.readRequest();
@@ -71,43 +75,4 @@ export class Bot {
          }
       }
    }
-}
-
-export async function runBot( token: string ) {
-   // Create a new client instance
-   const client = new Client( { intents: [
-      Intents.FLAGS.GUILDS,
-      Intents.FLAGS.GUILD_MESSAGES
-   ] });
-
-   // When the client is ready, run this code (only once)
-   client.once( 'ready', client => {
-      process.on( 'SIGINT', () => {
-         client.destroy();
-      } );
-
-      // const bot = new Bot( client );
-
-      client.channels.cache.forEach( async ( channel, name ) => {
-         if ( channel.type === 'GUILD_TEXT' && channel.name === 'general' ) {
-            await sendEmbed( channel );
-         }
-      } );
-   });
-   
-   // Login to Discord with your client's token
-   await client.login( token );
-}
-
-async function sendEmbed( channel: TextChannel ) {
-   const embed = new MessageEmbed();
-   embed.setTitle( 'Music' );
-   embed.setColor( '#FF0000' );
-   embed.addField( 'MAP01', 'Mus01', true );
-   embed.addField( 'MAP02', 'Mus02', true );
-   embed.setDescription( `This is a multi-line
-   description.
-
-   Another line.` );
-   await channel.send( { content: 'Hello', embeds: [ embed ] } );
 }

@@ -141,6 +141,7 @@ import { HelloCommand } from './commands/hello';
 import { TellMeCommand } from './commands/tell_me';
 import { EchoCommand } from './commands/echo';
 import { PickCommand } from './commands/pick';
+import { UppercaseCommand } from './commands/uppercase';
 import { Bot } from './bot';
 
 interface ConstructableCommand {
@@ -156,6 +157,7 @@ export async function createRegistry( bot: Bot ): Promise<CommandRegistry> {
    registry.add( new PickCommand() );
    registry.add( new EchoCommand() );
    registry.add( new TellMeCommand() );
+   registry.add( new UppercaseCommand() );
 
    const c: ConstructableCommand = TellMeCommand;
    new c( bot );

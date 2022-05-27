@@ -1,4 +1,4 @@
-import { Lexer, Token, TokenType as Tk } from "./Lexer";
+import { Lexer, Token, TokenType as Tk, TokenType } from "./Lexer";
 
 class SyntaxError {}
 
@@ -10,8 +10,8 @@ export class Option {
 export class Command {
    name: string = '';
    recipient: string|null = null;
-   options: Map<string, Option|Option[]> = new Map();
-   args: ( NormalArg|BracedArg|MentionArg )[] = [];
+   options: Options = new Map();
+   args: ArgList = [];
    allArgs: ( ActionArg|NormalArg|BracedArg )[] = [];
 }
 
@@ -20,7 +20,9 @@ export class ActionArg {
 }
 
 export class NormalArg {
-   text: string = '';
+   constructor(
+      public text: string = '',
+   ) {}
 }
 
 export class BracedArg {
@@ -32,6 +34,8 @@ export class MentionArg {
       public id: string,
    ) {}
 }
+
+type Value = ActionArg | NormalArg | BracedArg | MentionArg;
 
 export class Pipe {
    commands: Command[] = [];
@@ -45,6 +49,10 @@ export class Line {
 }
 
 type ArgList = ( ActionArg|NormalArg|BracedArg|MentionArg )[];
+
+// The value part of an option is an array because multiple options with the
+// same name can be specified. The values are then combined into an array.
+type Options = Map<string, Value[]>;
 
 /**
  * Parses a chat line.
@@ -66,6 +74,7 @@ export class Parser {
       try {
          const pipe = this.readPipe();
          const line = new Line( pipe, this.recipient );
+         this.testTk( TokenType.END );
 /*
          let args = pipe.commands[ 0 ].allArgs;
          while ( args.length > 0 ) {
@@ -126,47 +135,82 @@ export class Parser {
    }
 
    private parseCommand( pipe: Pipe ) {
-      const args = this.readArgList();
-      console.log( args );
+      this.testTk( TokenType.ID );
       const command = new Command();
+      command.name = this.token.text;
+      this.readTk();
 
-      while ( args.length > 0 ) {
-         const arg = args.shift();
-         if ( arg === undefined ) {
-            break;
-         }
-
-         if ( arg instanceof ActionArg ) {
-            if ( arg.name === '!' && args.length > 0 &&
-               args[ 0 ] instanceof MentionArg &&
-               pipe.commands.length === 0 ) {
-               command.recipient = args[ 0 ].id;
-               args.shift();
-
-            }
-            else {
-               command.name = arg.name;
-            }
-         }
-         else {
-            command.args.push( arg );
-         }
-      }
-      console.log( command );
+      command.options = this.readOptionPart();
+      command.args = this.readArgList();
 
       pipe.commands.push( command );
+   }
+
+   private readOptionPart(): Options {
+      const options = new Map<string, Value[]>();
+
+      while ( this.token.type === TokenType.OPTION_NAME ) {
+         this.readOption( options );
+      }
+
+      if ( this.token.type === TokenType.OPTION_END ) {
+         this.readTk();
+      }
+
+      /*
+      while ( this.token.type === TokenType.OPTION_NAME ) {
+         const option = this.readOption();
+         const value = options.get( option.name );
+         console.log( value );
+         if ( option.name in options ) {
+            const value = options.get( option.name );
+            if ( value instanceof Array ) {
+               value.push( option );
+            } else {
+               o = [ option ];
+               command.options.set( option.name, o );
+            }
+         } else {
+            command.options.set( option.name, option );
+         }
+      }
+      */
+
+
+      return options;
+   }
+
+   private readOption( options: Options ): void {
+      this.testTk( TokenType.OPTION_NAME );
+      const name = this.token.text;
+      this.readTk();
+
+      const value = options.get( name );
+      if ( value === undefined ) {
+         options.set( name, [] );
+      }
+
+      // @ts-ignore: compiler is not smart enough to see that we modified
+      // the token in the readTk() method.
+      if ( this.token.type === Tk.EQ ) {
+         this.readTk();
+         const value = this.readArg();
+         options.get( name )?.push( value );
+      }
    }
 
    private readArgList(): ArgList {
       const args: ArgList = [];
       while ( true ) {
-         if ( this.token.type === Tk.TICK ) {
-            this.readCommandItem( args )
-         } else if ( this.token.type === Tk.LBRACE
+         if ( this.token.type === Tk.LBRACE
             || this.token.type === Tk.MENTION
             || this.token.type === Tk.ID
+            || this.token.type === Tk.OPTION_NAME
+            || this.token.type === Tk.OPTION_END
+            || this.token.type === Tk.STRING
             || this.token.type === Tk.NORMAL_ARG  ) {
-            this.readArg( args );
+            const arg = this.readArg();
+            args.push( arg );
          } else {
             ++this.commandsParsed;
             return args;
@@ -175,27 +219,9 @@ export class Parser {
    }
 
    private readCommandItem( args: ArgList ) {
-      this.testTk( Tk.TICK )
-      this.readTk()
-      if ( this.token.type == Tk.BANG ) {
-         let arg = new ActionArg();
-         arg.name = '!';
-         args.push( arg );
-         this.readTk();
-      } else {
-         this.testTk( Tk.ID );
-         //command.name = this.token.text;
-         let arg = new ActionArg();
-         arg.name = this.token.text;
-         args.push( arg );
-         this.readTk();
-         this.readOptionList( args );
-      }
-      this.testTk( Tk.TICK );
-      this.readTk();
    }
 
-   private readOptionList( args: ArgList ) {
+   private readOptionList() {
       while ( this.token.type === Tk.ID ) {
          const option = new Option();
          option.name = this.token.text;
@@ -225,32 +251,39 @@ export class Parser {
       }
    }
 
-   private readArg( args: ArgList ) {
+   private readArg(): any {
       if ( this.token.type == Tk.LBRACE ) {
          this.readTk();
          const arg = new BracedArg();
          arg.pipe = this.readPipe();
-         args.push( arg );
          this.testTk( Tk.RBRACE )
          this.readTk();
+         return arg;
       } else if ( this.token.type === Tk.MENTION ) {
-         this.readMention( args );
+         return this.readMention();
+      } else if ( 
+         this.token.type === Tk.OPTION_NAME ||
+         this.token.type === Tk.OPTION_END ) {
+         const arg = new NormalArg();
+         arg.text = '--' + this.token.text;
+         this.readTk();
+         return arg;
       } else {
-         if ( this.token.type !== Tk.ID ) {
+         if ( this.token.type !== Tk.ID && this.token.type !== Tk.STRING ) {
             this.testTk( Tk.NORMAL_ARG );
          }
          const arg = new NormalArg();
          arg.text = this.token.text;
-         args.push( arg );
          this.readTk();
+         return arg;
       }
    }
 
-   private readMention( args: ArgList ) {
+   private readMention() {
       this.testTk( Tk.MENTION );
       const arg = new MentionArg( this.token.text );
-      args.push( arg );
       this.readTk();
+      return arg;
 
       /*
       if ( this.commandsParsed === 0 && (

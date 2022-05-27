@@ -2,8 +2,6 @@
 export enum TokenType {
    END,
    BAR,
-   TICK,
-   BANG,
    EQ,
    ID,
    STRING,
@@ -11,6 +9,8 @@ export enum TokenType {
    RBRACE,
    MENTION,
    NORMAL_ARG,
+   OPTION_NAME,
+   OPTION_END,
 }
 
 export interface Token {
@@ -56,16 +56,8 @@ export class Lexer {
             case '<':
                this.readMention();
                break;
-            case '!':
-               this.result( TokenType.BANG )
-               ++this.pos;
-               break;
             case '|':
                this.result( TokenType.BAR )
-               ++this.pos;
-               break;
-            case '`':
-               this.result( TokenType.TICK )
                ++this.pos;
                break;
             case '=':
@@ -79,6 +71,9 @@ export class Lexer {
             case '}':
                this.result( TokenType.RBRACE )
                ++this.pos;
+               break;
+            case '-':
+               this.readOptionName();
                break;
             default:
                this.readArgument();
@@ -110,15 +105,28 @@ export class Lexer {
    }
 
    private readString(): boolean {
+      const buffer: string[] = [];
       const start = this.pos;
       while ( this.pos < this.text.length && this.text[ this.pos ] !== '"' ) {
-         ++this.pos;
+         if ( this.peekChar( this.pos ) === '\\' ) {
+            ++this.pos;
+            if (
+               this.peekChar( this.pos ) === '"' ||
+               this.peekChar( this.pos ) === '\\' ) {
+               buffer.push( this.text[ this.pos ] );
+               ++this.pos;
+            } 
+         }
+         else {
+            buffer.push( this.text[ this.pos ] );
+            ++this.pos;
+         }
       }
-      if ( this.pos <= this.text.length ) {
-         this.result( TokenType.STRING, this.text.slice( start, this.pos ) );
+
+         this.result( TokenType.STRING, buffer.join( '' ) );
          ++this.pos;
          return true;
-      }
+
       return false;
    }
 
@@ -158,11 +166,36 @@ export class Lexer {
       return false;
    }
 
+   private readOptionName(): void {
+      if ( this.text[ this.pos ] === '-' &&
+         this.peekChar( this.pos + 1 ) === '-' ) {
+         this.pos += 2;
+         if ( this.pos < this.text.length &&
+            this.text[ this.pos ].search( /[a-zA-Z0-9]/ ) !== -1 ) {
+            this.readId();
+            this.token.type = TokenType.OPTION_NAME;
+         }
+         else {
+            this.result( TokenType.OPTION_END );
+         }
+      }
+      else {
+         this.readArgument();
+      }
+   }
+
    private result( type: TokenType, text: string = '' ) {
       this.token = { type, text };
    }
 
-   test( expectedTk: TokenType ) {
+   private peekChar( pos: number ): string | undefined {
+      if ( pos < this.text.length ) {
+         return this.text[ pos ];
+      }
+      return undefined;
+   }
+
+   test( expectedTk: TokenType ): void {
       if ( this.token.type !== expectedTk ) {
          //console.log( this.token.type );
          //console.log( this.token.text );
