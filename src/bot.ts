@@ -1,10 +1,10 @@
-import { Channel, Client, Intents, Message, MessageEmbed, Permissions, Role, TextChannel } from 'discord.js';
+import { Util, Channel, Client, Intents, Message, MessageEmbed, Permissions, Role, TextChannel } from 'discord.js';
 import { Executor } from './Executor';
-import { createRegistry } from './command';
 import { Lexer, Token, TokenType } from './Lexer';
 import { Parser } from './Parser';
 import { User } from './User';
 import process from 'process'
+import { createRegistry } from './CommandRegistry';
 
 export class Bot {
    constructor( private client: Client ) {
@@ -65,7 +65,10 @@ export class Bot {
             const executor = new Executor( registry, user, request.pipe )
             const output = executor.execute();
             if ( output !== '' ) {
-               message.channel.send( output );
+               const escapedOutput = output.replaceAll( '\\', '\\\\' );
+               message.channel.send( escapedOutput );
+               console.log( escapedOutput );
+               console.log( Util.escapeMarkdown( output ) );
             }
          } catch ( err ) {
             if ( err instanceof Error ) {

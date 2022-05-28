@@ -8,7 +8,10 @@ export class TellMeCommand extends Command {
       'I\'d like to think so',
       'I\'m too cool for that shit',
       '**FLOCK** no',
-      'I could see that happening'
+      'I could see that happening',
+      'I\'m cool and you\'re not',
+      'How about no',
+      'Piss off, mate',
    ];
 
    constructor() {

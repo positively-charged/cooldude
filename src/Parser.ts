@@ -72,6 +72,13 @@ export class Parser {
 
    readRequest(): Line|null {
       try {
+         if ( this.token.type === Tk.MENTION ) {
+            this.recipient = this.token.text;
+            this.readTk();
+         }
+         else {
+            return null;
+         }
          const pipe = this.readPipe();
          const line = new Line( pipe, this.recipient );
          this.testTk( TokenType.END );

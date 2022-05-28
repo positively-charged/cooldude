@@ -108,13 +108,20 @@ export class Lexer {
       const buffer: string[] = [];
       const start = this.pos;
       while ( this.pos < this.text.length && this.text[ this.pos ] !== '"' ) {
+         // For whatever reason, Discord or the Discord library escapes every
+         // backslash, even the backslash that is used to escape a following
+         // backslash.
          if ( this.peekChar( this.pos ) === '\\' ) {
             ++this.pos;
-            if (
-               this.peekChar( this.pos ) === '"' ||
-               this.peekChar( this.pos ) === '\\' ) {
+            if ( this.peekChar( this.pos ) === '\\' ) {
+               buffer.push( '\\' );
+               ++this.pos;
+            } else if ( this.peekChar( this.pos ) === '"' ) {
                buffer.push( this.text[ this.pos ] );
                ++this.pos;
+            }
+            else {
+               buffer.push( '\\' );
             } 
          }
          else {
@@ -123,9 +130,13 @@ export class Lexer {
          }
       }
 
+      if ( this.pos < this.text.length ) {
          this.result( TokenType.STRING, buffer.join( '' ) );
          ++this.pos;
          return true;
+      } else {
+         throw new SyntaxError();
+      }
 
       return false;
    }

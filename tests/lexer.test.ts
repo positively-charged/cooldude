@@ -19,3 +19,15 @@ function expectTk( lexer: Lexer, tk: TokenType ): void {
    expect( () => lexer.read() ).not.toThrow();
    expect( () => lexer.test( tk ) ).not.toThrow();
 }
+
+test( 'string tokens', () => {
+   let lexer = new Lexer( '"\\\\\\""' );
+   expectTk( lexer, TokenType.STRING );
+   expect( lexer.token.text ).toStrictEqual( '\\"' );
+   lexer = new Lexer( '"\\\\"' );
+   expectTk( lexer, TokenType.STRING );
+   expect( lexer.token.text ).toStrictEqual( '\\' );
+   lexer = new Lexer( '"\\\\\\""' );
+   expectTk( lexer, TokenType.STRING );
+   expect( lexer.token.text ).toStrictEqual( '\\"' );
+} );

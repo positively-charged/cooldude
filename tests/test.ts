@@ -76,8 +76,6 @@ test( 'parsing of all possible tokens', () => {
       |\`!=abc123"321cba"{} <@1234> <@!4321> @#$
    ` );
    expect( lexer.read() ).toStrictEqual( token( Tk.BAR ) );
-   expect( lexer.read() ).toStrictEqual( token( Tk.TICK ) );
-   expect( lexer.read() ).toStrictEqual( token( Tk.BANG ) );
    expect( lexer.read() ).toStrictEqual( token( Tk.EQ ) );
    expect( lexer.read() ).toStrictEqual( token( Tk.ID, 'abc123' ) );
    expect( lexer.read() ).toStrictEqual( token( Tk.STRING, '321cba' ) );

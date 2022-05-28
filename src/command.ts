@@ -1,14 +1,22 @@
 import { Options } from 'discord.js';
+import { ArgReader, CommandEntry } from './CommandRegistry';
 import { Option } from './Parser';
 import { User } from './User';
 
-export class Request<T = '', O extends string = string> {
+export class Request<T = string, O extends string = string> {
    options: Map<O, Option|Option[]> = new Map();
    args: Map<T, any> = new Map();
-   constructor( public user: User ) {}
+   args2: ArgReader;
+   constructor( public user: User, entry: CommandEntry ) {
+      this.args2 = new ArgReader( entry );
+   }
 
    arg( name: string, type: Function = Function ) {
 
+   }
+
+   public addArg( value: string, type: Function = Function ): void {
+      this.args2.add( value );
    }
 }
 
@@ -87,27 +95,7 @@ export abstract class Command<T extends string = string,
    }
 }
 
-export class CommandRegistry {
-   private handlers: Map<string, Command<any, any>>;
 
-   constructor() {
-      this.handlers = new Map();
-   }
-
-   add<T2 extends string, O extends string>( command: Command<T2, O> ) {
-      if ( ! ( command.name in this.handlers ) ) {
-         this.handlers.set( command.name, command );
-      }
-   }
-
-   find( name: string ): Readonly<Command>|null {
-      const handler = this.handlers.get( name );
-      if ( handler !== undefined ) {
-         return handler;
-      }
-      return null;
-   }
-}
 type Constructor<T> =  new( ... args: any[] ) => T;
 
 export class Args {
@@ -134,32 +122,4 @@ export class Args {
       }
       return arg;
    }
-}
-
-
-import { HelloCommand } from './commands/hello';
-import { TellMeCommand } from './commands/tell_me';
-import { EchoCommand } from './commands/echo';
-import { PickCommand } from './commands/pick';
-import { UppercaseCommand } from './commands/uppercase';
-import { Bot } from './bot';
-
-interface ConstructableCommand {
-   new ( bot: Bot ): Command;
-}
-
-export async function createRegistry( bot: Bot ): Promise<CommandRegistry> {
-   const registry = new CommandRegistry();
-   //registry.add( new HelloHandler() );
-   //registry.add( new HelloCommand( bot ) );
-   const module = await import( './commands/hello' );
-   registry.add( new module.HelloCommand( bot ) );
-   registry.add( new PickCommand() );
-   registry.add( new EchoCommand() );
-   registry.add( new TellMeCommand() );
-   registry.add( new UppercaseCommand() );
-
-   const c: ConstructableCommand = TellMeCommand;
-   new c( bot );
-   return registry;
 }
