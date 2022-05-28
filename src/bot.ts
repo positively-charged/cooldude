@@ -63,7 +63,7 @@ export class Bot {
          const registry = await createRegistry( this );
          try {
             const executor = new Executor( registry, user, request.pipe )
-            const output = executor.execute();
+            const output = await executor.execute();
             if ( output !== '' ) {
                const escapedOutput = output.replaceAll( '\\', '\\\\' );
                message.channel.send( escapedOutput );

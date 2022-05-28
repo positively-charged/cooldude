@@ -18,19 +18,19 @@ export class Executor {
       this.prevResult = null;
    }
 
-   execute(): string {
-      this.executePipe();
+   public async execute(): Promise<string> {
+      await this.executePipe();
       const output = this.outputResult();
       return output;
    }
 
-   private executePipe(): void {
+   private async executePipe(): Promise<void> {
       for ( const command of this.pipe.commands ) {
-         this.executeCommand( command );
+         await this.executeCommand( command );
       }
    }
 
-   private executeCommand( reading: Command ) {
+   private async executeCommand( reading: Command ) {
       let pos = 0;
 
       let name = reading.name;
@@ -82,7 +82,7 @@ export class Executor {
       const response = new Response();
 
       const handler = new CommandHandler( this.registry );
-      handler.execute( entry.name, request, response );
+      await handler.execute( entry.name, request, response );
 
       /*
       if ( command.handle !== null ) {

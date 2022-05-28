@@ -50,14 +50,14 @@ export class QuestionQuery {
       const stmt = await db.prepare( this.query, args );
       const row = await stmt.get();
       await stmt.finalize();
-console.log( args );
+//console.log( args );
       for ( const sub of this.subs ) {
          if ( sub in row ) {
             reply.sub( sub, row[ sub ] );  
          }
       }
 
-      console.log( row);
+  //    console.log( row);
 
       reply.answer = row[ this.answerCol ];
    }

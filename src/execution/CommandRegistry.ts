@@ -63,7 +63,12 @@ export class ArgReader {
          ++this.pos;
          return arg;
       } else {
-         throw new Error( 'too little arguments' );
+         if ( this.pos < this.entry.params.length ) {
+            const name = this.entry.params[ this.pos ].name;
+            throw new Error( `**error:** missing \`${ name }\` argument` );
+         } else {
+            throw new Error( '**error:** too little arguments' );
+         }
       }
    }
 
@@ -118,6 +123,12 @@ export class CommandRegistry {
       entry.param( 'participant1' );
       entry.param( 'participant2' );
       entry.param( 'others' ).optional().rest();
+      this.define( 'map-info' )
+         .description( 'Show information about a Jumpmaze map' )
+         .param( 'map' );
+      this.define( 'project-info' )
+         .description( 'Show information about a Jumpmaze project' )
+         .param( 'project' ).optional();
    }
 
    public get( name: string ): Readonly<CommandEntry> | null {

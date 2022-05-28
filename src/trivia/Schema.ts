@@ -32,7 +32,7 @@ export class Schema {
       //table.insert( 
 
       const table = await tableDef.create( this.db );
-      console.log( entries );
+      // console.log( entries );
 
       // Populate table with entity records.
       for ( const [ id, record ] of entries ) {

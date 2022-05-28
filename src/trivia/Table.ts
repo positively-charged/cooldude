@@ -20,7 +20,7 @@ export class Table {
       let query = this.createInsertQuery( args );
       let stmt = await this.db.prepare( query );
       args = [ id, ... Object.values( args ) ];
-      console.log( query, args );
+      //console.log( query, args );
       await stmt.run( args );
       await stmt.finalize();
    }

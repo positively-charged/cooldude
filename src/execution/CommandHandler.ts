@@ -1,6 +1,7 @@
 import { Request, Response } from "./command";
 import { CommandRegistry } from "./CommandRegistry";
 import { Help } from "./Help";
+import * as db from "../trivia/DatabaseLoader";
 
 /**
  * This class implements the behavior of the commands.
@@ -10,8 +11,8 @@ export class CommandHandler {
       private registry: CommandRegistry,
    ) {}
 
-   public execute( commandName: string, request: Request,
-      response: Response ): void {
+   public async execute( commandName: string, request: Request,
+      response: Response ): Promise<void> {
       switch ( commandName ) {
       case 'echo':
          this.handleEcho( request, response );
@@ -27,6 +28,12 @@ export class CommandHandler {
          break;
       case 'who-would-win':
          this.handleWhoWouldWin( request, response );
+         break;
+      case 'map-info':
+         await this.handleMapInfo( request, response );
+         break;
+      case 'project-info':
+         await this.handleProjectInfo( request, response );
          break;
       default:
          throw new Error( `\`${commandName}\` not implemented` );
@@ -126,5 +133,102 @@ export class CommandHandler {
          CommandHandler.oneVsManyOutcomes.length );
       response.result = CommandHandler.oneVsManyOutcomes[ index ](
          participants[ winner ] );
+   }
+
+   private async handleMapInfo( request: Request,
+      response: Response ): Promise<void> {
+      
+
+      const map = request.args2.required();
+      console.log( map );
+
+      const handle = await db.loadDb();
+
+      const stmt = await handle.prepare( `select * from map
+         where lower( lump ) = ?` );
+      const row = await stmt.get( map );
+      await stmt.finalize();
+
+      if ( row === undefined ) {
+         throw new Error( `map \`${ map }\` not found` );
+      }
+
+      const details =
+         "```\n" +
+         `${ row[ 'lump' ] } -- ${ row[ 'name' ] }\n` +
+         `Difficulty: ${ row[ 'difficulty' ] }\n` +
+         `Type: ${ row[ 'type' ] }\n` +
+         `Par: ${ row[ 'par' ] }\n` +
+         "```\n";
+
+   
+      response.result = details;
+      //console.log( row );
+   }
+
+   private async handleProjectInfo( request: Request,
+      response: Response ): Promise<void> {
+      const projectId = request.args2.optional();
+      if ( projectId !== '' ) {
+         await this.showProject( response, projectId );
+      } else {
+         await this.listProjects( response );
+      }
+   }
+
+   private async showProject( response: Response,
+      projectId: string ): Promise<void> {
+
+      const handle = await db.loadDb();
+
+      let stmt = await handle.prepare( `select * from project
+         where lower( id ) = ?` );
+      const row = await stmt.get( projectId );
+      await stmt.finalize();
+
+      if ( row === undefined ) {
+         throw new Error( `project \`${ projectId }\` not found` );
+      }
+      
+      stmt = await handle.prepare( `
+         select map.lump, map.name from project
+            join project_map on project.id = project_map.project
+            join map on project_map.map = map.id
+            where project.id = ?;
+      ` );
+      const maps = await stmt.all( projectId );
+      await stmt.finalize();
+
+      let details =
+         "```\n" +
+         `${ row[ 'id' ] } -- ${ row[ 'name' ] }\n` +
+         `Maps:\n`;
+         
+      for ( let i = 0; i < maps.length; ++i ) {
+         const map = maps[ i ];
+         details += `${ map[ 'lump' ] } -- ${ map[ 'name' ] }\n`;
+      }
+
+      details += "```\n";
+
+      response.result = details;
+   }
+
+   private async listProjects( response: Response ): Promise<void> {
+      const handle = await db.loadDb();
+
+      let stmt = await handle.prepare( `select * from project` );
+      const rows = await stmt.all();
+      await stmt.finalize();
+
+      let details = "```\n";
+         
+      for ( const row of rows ) {
+         details += `${ row[ 'id' ] } -- ${ row[ 'name' ] }\n`;
+      }
+
+      details += "```\n";
+
+      response.result = details;
    }
 }

@@ -6,7 +6,7 @@ import { Lexer } from '../src/Lexer';
 import { Line, NormalArg, Parser } from '../src/Parser';
 import { User } from '../src/User';
 
-function executeCommand( command: string ): string {
+async function executeCommand( command: string ): Promise<string> {
    const lexer = new Lexer( command );
    const parser = new Parser( lexer );
    
@@ -59,4 +59,15 @@ test( 'parse command name only', () => {
    
    expect( response.result ).toStrictEqual( 'a b c' );
 
+} );
+
+test( 'map-info', async () => {
+   expect( await executeCommand( '<@123> map-info map01' ) );
+   expect( executeCommand( '<@123> map-info invalid-map' ) )
+      .rejects.toThrow( Error );
+} );
+
+test( 'project-info', async () => {
+   expect( await executeCommand( '<@123> project-info' ) );
+   expect( await executeCommand( '<@123> project-info jm' ) );
 } );
