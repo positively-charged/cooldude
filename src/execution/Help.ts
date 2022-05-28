@@ -37,6 +37,17 @@ export class Help {
    }
 
    public showForAll(): string {
-      return '';  
+      let output = '';
+      output += "The following commands are available:\n";
+      output += "```\n";
+
+      const names = this.commands.list();
+      for ( const name of names ) {
+         output += `${ name }\n`;
+      }
+      
+      output += "```\n";
+
+      return output;
    }
 }

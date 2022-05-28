@@ -5,6 +5,8 @@ import { Parser } from './Parser';
 import { User } from './User';
 import process from 'process'
 import { createRegistry } from './execution/CommandRegistry';
+import { Help } from './execution/Help';
+import { Response } from './execution/command';
 
 export class Bot {
    constructor( private client: Client ) {
@@ -62,8 +64,15 @@ export class Bot {
          let user = new User();
          const registry = await createRegistry( this );
          try {
-            const executor = new Executor( registry, user, request.pipe )
-            const output = await executor.execute();
+            let output;
+            if ( request.pipe.commands.length === 0 ) {
+               const response = new Response();
+               const help = new Help( registry, response );
+               output = help.showForAll();
+            } else {
+               const executor = new Executor( registry, user, request.pipe )
+               output = await executor.execute();
+            }
             if ( output !== '' ) {
                const escapedOutput = output.replaceAll( '\\', '\\\\' );
                message.channel.send( escapedOutput );

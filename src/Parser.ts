@@ -44,7 +44,7 @@ export class Pipe {
 export class Line {
    constructor(
       public pipe: Pipe,
-      public recipient: string|null = null,
+      public recipient: string | null = null,
    ) {}
 }
 
@@ -79,7 +79,14 @@ export class Parser {
          else {
             return null;
          }
-         const pipe = this.readPipe();
+
+         let pipe = null;
+         // @ts-ignore
+         if ( this.token.type !== Tk.END ) {
+            pipe = this.readPipe();
+         } else {
+            pipe = new Pipe();
+         }
          const line = new Line( pipe, this.recipient );
          this.testTk( TokenType.END );
 /*
