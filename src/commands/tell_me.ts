@@ -1,4 +1,4 @@
-import { Command } from '../command';
+import { Command } from '../execution/command';
 
 export class TellMeCommand extends Command {
    // The options list must contain at least one option, because other code

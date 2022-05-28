@@ -1,6 +1,7 @@
-import { Request, Response } from '../src/command';
-import { ArgReader, CommandRegistry } from '../src/CommandRegistry';
-import { Executor, CommandHandler } from '../src/Executor';
+import { Request, Response } from '../src/execution/command';
+import { CommandHandler } from '../src/execution/CommandHandler';
+import { ArgReader, CommandRegistry } from '../src/execution/CommandRegistry';
+import { Executor } from '../src/execution/Executor';
 import { Lexer } from '../src/Lexer';
 import { Line, NormalArg, Parser } from '../src/Parser';
 import { User } from '../src/User';

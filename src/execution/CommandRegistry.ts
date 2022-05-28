@@ -159,7 +159,7 @@ export class CommandRegistry {
 }
 
 
-import { Bot } from './bot';
+import { Bot } from '../bot';
 
 interface ConstructableCommand {
    new ( bot: Bot ): Command;

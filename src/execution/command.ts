@@ -1,7 +1,7 @@
 import { Options } from 'discord.js';
 import { ArgReader, CommandEntry } from './CommandRegistry';
-import { Option } from './Parser';
-import { User } from './User';
+import { Option } from '../Parser';
+import { User } from '../User';
 
 export class Request<T = string, O extends string = string> {
    options: Map<O, Option|Option[]> = new Map();

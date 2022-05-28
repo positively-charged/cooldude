@@ -1,10 +1,10 @@
 import { Util, Channel, Client, Intents, Message, MessageEmbed, Permissions, Role, TextChannel } from 'discord.js';
-import { Executor } from './Executor';
+import { Executor } from './execution/Executor';
 import { Lexer, Token, TokenType } from './Lexer';
 import { Parser } from './Parser';
 import { User } from './User';
 import process from 'process'
-import { createRegistry } from './CommandRegistry';
+import { createRegistry } from './execution/CommandRegistry';
 
 export class Bot {
    constructor( private client: Client ) {
